@@ -42,7 +42,7 @@ namespace BangazonWorkforce.Controllers
                                         tr.Name,
                                         tr.StartDate,
                                         tr.EndDate,
-                                        tr.MaxAtendees
+                                        tr.MaxAttendees
                                         FROM TrainingProgram tr";
 
                     SqlDataReader reader = cmd.ExecuteReader();
@@ -56,7 +56,7 @@ namespace BangazonWorkforce.Controllers
                             Name = reader.GetString(reader.GetOrdinal("Name")),
                             StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
                             EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
-                            MaxAtendees = reader.GetInt32(reader.GetOrdinal("MaxAtendees"))
+                            MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
                         };
 
                         trainingPrograms.Add(trainingProgram);
@@ -99,7 +99,7 @@ namespace BangazonWorkforce.Controllers
                             Name = reader.GetString(reader.GetOrdinal("Name")),
                             StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
                             EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
-                            MaxAtendees = reader.GetInt32(reader.GetOrdinal("MaxAtendees"))
+                            MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
                         };
 
 
@@ -137,14 +137,14 @@ namespace BangazonWorkforce.Controllers
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"INSERT INTO TrainingProgram
-                ( Id, Name, StartDate, EndDate, MaxAtendees )
+                (  Name, StartDate, EndDate, MaxAttendees )
                 VALUES
-                ( @Id, @Name, @StartDate, @EndDate, @MaxAtendees )";
-                        cmd.Parameters.Add(new SqlParameter("@Id", model.trainingProgram.Id));
+                (  @Name, @StartDate, @EndDate, @MaxAttendees )";
+                        
                         cmd.Parameters.Add(new SqlParameter("@Name", model.trainingProgram.Name));
                         cmd.Parameters.Add(new SqlParameter("@StartDate", model.trainingProgram.StartDate));
                         cmd.Parameters.Add(new SqlParameter("@EndDate", model.trainingProgram.EndDate));
-                        cmd.Parameters.Add(new SqlParameter("@MaxAttendees", model.trainingProgram.MaxAtendees));
+                        cmd.Parameters.Add(new SqlParameter("@MaxAttendees", model.trainingProgram.MaxAttendees));
                         await cmd.ExecuteNonQueryAsync();
 
                         return RedirectToAction(nameof(Index));
