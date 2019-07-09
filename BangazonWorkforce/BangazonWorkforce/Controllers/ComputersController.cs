@@ -1,14 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
+using BangazonWorkforce.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 
 namespace BangazonWorkforce.Controllers
 {
     public class ComputersController : Controller
     {
+        private readonly IConfiguration _config;
+
+        public ComputersController(IConfiguration config)
+        {
+            _config = config;
+        }
+
+        public SqlConnection Connection
+        {
+            get
+            {
+                return new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            }
+        }
         // GET: Computers
         public ActionResult Index()
         {
@@ -18,7 +35,8 @@ namespace BangazonWorkforce.Controllers
         // GET: Computers/Details/5
         public ActionResult Details(int id)
         {
-            return View();
+            Computer computer = GetComputerById(id);
+            return View(computer);
         }
 
         // GET: Computers/Create
@@ -87,6 +105,47 @@ namespace BangazonWorkforce.Controllers
             catch
             {
                 return View();
+            }
+        }
+
+        // this is the function to be able to get one computer by id
+        private Computer GetComputerById(int id)
+        {
+            using(SqlConnection conn = Connection)
+            {
+                // open the connection 
+                conn.Open();
+                using(SqlCommand cmd = conn.CreateCommand())
+                {
+                    // run the query 
+                    cmd.CommandText = $@"SELECT Id,
+                                                PurchaseDate,
+                                                DecomissionDate,
+                                                Make,
+                                                Manufacturer
+                                        FROM Computer
+                                        WHERE Id = @id;";
+
+                    // parameters
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                    Computer computer = null;
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    if (reader.Read())
+                    {
+                        computer = new Computer
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
+                            DecommissionDate = reader.GetDateTime(reader.GetOrdinal("DecommissionDate")),
+                            Make = reader.GetString(reader.GetOrdinal("Make")),
+                            Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
+                        };
+                    }
+                    // close the connection and return the computer
+                    reader.Close();
+                    return computer;
+                }
             }
         }
     }
