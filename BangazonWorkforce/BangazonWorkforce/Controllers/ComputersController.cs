@@ -129,7 +129,10 @@ namespace BangazonWorkforce.Controllers
         {
             try
             {
-                // TODO: Add delete logic here
+                using (SqlConnection conn = Connection)
+                {
+
+                }
 
                 return RedirectToAction(nameof(Index));
             }
