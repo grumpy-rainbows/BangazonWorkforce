@@ -103,13 +103,13 @@ namespace BangazonWorkforce.Controllers
                         }
                         else
                         {
-                            DateTime? nullDate = null;
+                            //DateTime? nullDate = null;
                             
                             computer = new Computer
                             {
                                 Id = reader.GetInt32(reader.GetOrdinal("Id")),
                                 PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
-                                DecomissionDate = nullDate,
+                                DecomissionDate = null ,
                                 Make = reader.GetString(reader.GetOrdinal("Make")),
                                 Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
                             };
