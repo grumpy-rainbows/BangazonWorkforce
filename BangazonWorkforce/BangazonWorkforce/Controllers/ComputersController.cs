@@ -11,7 +11,7 @@ using Microsoft.Extensions.Configuration;
 namespace BangazonWorkforce.Controllers
 {
     public class ComputersController : Controller
-            
+
     {
         private readonly IConfiguration _config;
 
@@ -58,9 +58,9 @@ namespace BangazonWorkforce.Controllers
                     reader.Close();
                     return View(computers);
                 }
-                
+
             }
- 
+
         }
 
         // GET: Computers/Details/5
@@ -118,7 +118,7 @@ namespace BangazonWorkforce.Controllers
         // GET: Computers/Delete/5
         public ActionResult Delete(int id)
         {
-
+            Computer computer = GetComputerById(id);
             return View();
         }
 
@@ -157,11 +157,25 @@ namespace BangazonWorkforce.Controllers
 
                     cmd.Parameters.Add(new SqlParameter("@Id", id));
                     SqlDataReader reader = cmd.ExecuteReader();
-                        
+
+                    Computer computer = null;
+                    if (reader.Read())
+                    {
+                        computer = new Computer
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Make = reader.GetString(reader.GetOrdinal("Make")),
+                            Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer")),
+                            PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
+                            DecomissionDate = reader.GetDateTime(reader.GetOrdinal("DecomissionDate"))
+                        };
+                    }
+                    reader.Close();
+                    return computer;
                 }
             }
         }
-        private List<Computer> GetAllComputers ()
+        private List<Computer> GetAllComputers()
         {
             using (SqlConnection conn = Connection)
             {
@@ -195,4 +209,5 @@ namespace BangazonWorkforce.Controllers
             }
 
         }
+    }
 }
