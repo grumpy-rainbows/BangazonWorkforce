@@ -12,7 +12,7 @@ namespace BangazonWorkforce.Controllers
 {
     public class TrainingProgramController : Controller
     {
-        
+
         private readonly IConfiguration _config;
 
         public TrainingProgramController(IConfiguration config)
@@ -67,18 +67,60 @@ namespace BangazonWorkforce.Controllers
                 }
             }
         }
-
+    
     
 
     // GET: TrainingProgram/Details/5
     public ActionResult Details(int id)
         {
-            return View();
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"
+                                    SELECT tr.Id,
+                                        tr.Name,
+                                        tr.StartDate,
+                                        tr.EndDate,
+                                        tr.MaxAttendees
+                                        FROM TrainingProgram tr";
+
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    TrainingProgram trainingProgram = null;
+                    if (reader.Read())
+                    {
+                        trainingProgram = new TrainingProgram
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                            EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                            MaxAtAtendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
+                        };
+
+                      
+                    reader.Close();
+
+                    return View(trainingProgram);
+                    }
+                    else
+                    {
+                        return new StatusCodeResult(StatusCodes.Status404NotFound);
+                    }
+
+                }
+            }
         }
+
 
         // GET: TrainingProgram/Create
         public ActionResult Create()
         {
+            //TrainingProgramCreateViewModel viewModel = new TrainingProgramCreateViewModel();
+
             return View();
         }
 
