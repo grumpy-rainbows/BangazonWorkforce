@@ -12,7 +12,7 @@ namespace BangazonWorkforce.Models
         public int EmployeeId { get; set; }
         [Required]
         public int ComputerId { get; set; }
-        [Required]
+        
         public DateTime AssignDate { get; set; }
         [Required]
         public DateTime UnassignDate { get; set; }
