@@ -38,11 +38,11 @@ namespace BangazonWorkforce.Controllers
                 {
                     cmd.CommandText = @"SELECT 
                                                e.Id AS EmployeeId,
-                                               e.FirstName AS ' Employee First Name' ,
-	                                           e.LastName AS ' Employee Last Name ',
+                                               e.FirstName AS EmployeeFirstName ,
+	                                           e.LastName AS EmployeeLastName ,
                                                d.Id as DepartmentId ,
-                                               d.Budget AS ' Department Budget ',
-	                                           d.Name AS ' Department Name '
+                                               d.Budget AS DepartmentBudget ,
+	                                           d.Name AS DepartmentName
                                         FROM Employee e
                                         JOIN Department AS d ON d.Id = e.DepartmentId";
 
@@ -55,14 +55,14 @@ namespace BangazonWorkforce.Controllers
                         Employee employee = new Employee
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
-                            FirstName = reader.GetString(reader.GetOrdinal("Employee First Name")),
-                            LastName = reader.GetString(reader.GetOrdinal("Employee Last Name")),
+                            FirstName = reader.GetString(reader.GetOrdinal("EmployeeFirstName")),
+                            LastName = reader.GetString(reader.GetOrdinal("EmployeeLastName")),
                             DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
                             Department = new Department
                             {
                                 Id = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
-                                Name = reader.GetString(reader.GetOrdinal("Department Name")),
-                                Budget = reader.GetInt32(reader.GetOrdinal("Department Budget"))
+                                Name = reader.GetString(reader.GetOrdinal("DepartmentName")),
+                                Budget = reader.GetInt32(reader.GetOrdinal("DepartmentBudget"))
                             }
                         };
 
