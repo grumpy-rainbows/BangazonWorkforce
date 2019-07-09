@@ -137,7 +137,7 @@ namespace BangazonWorkforce.Controllers
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
-                            DecommissionDate = reader.GetDateTime(reader.GetOrdinal("DecommissionDate")),
+                            DecomissionDate = reader.GetDateTime(reader.GetOrdinal("DecomissionDate")),
                             Make = reader.GetString(reader.GetOrdinal("Make")),
                             Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
                         };
