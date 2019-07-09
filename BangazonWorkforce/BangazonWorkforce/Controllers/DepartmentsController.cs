@@ -37,7 +37,11 @@ namespace BangazonWorkforce.Controllers
 
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT d.id, d.Name, d.Budget FROM Department d";
+                    cmd.CommandText = @"SELECT d.Id, d.Name AS DepartmentName, d.Budget AS DepartmentBudget, e.DepartmentId AS DepartmentID,
+                                        COUNT(*) AS NumberofEmployees
+                                        FROM Employee e
+                                        INNER JOIN Department d ON d.Id = e.DepartmentId
+                                        GROUP BY e.DepartmentId, d.Id, d.Name, d.Budget";
 
                     SqlDataReader reader = cmd.ExecuteReader();
 
@@ -47,8 +51,9 @@ namespace BangazonWorkforce.Controllers
                         Department department = new Department
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
-                            Budget = reader.GetInt32(reader.GetOrdinal("Budget"))
+                            Name = reader.GetString(reader.GetOrdinal("DepartmentName")),
+                            Budget = reader.GetInt32(reader.GetOrdinal("DepartmentBudget")),
+                            NumberofEmployees = reader.GetInt32(reader.GetOrdinal("NumberofEmployees"))
                         };
 
                         departments.Add(department);
