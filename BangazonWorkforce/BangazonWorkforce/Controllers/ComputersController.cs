@@ -66,7 +66,61 @@ namespace BangazonWorkforce.Controllers
         // GET: Computers/Details/5
         public ActionResult Details(int id)
         {
-            return View();
+            //Computer computer = GetComputerById(id);
+            //return View(computer);
+            using (SqlConnection conn = Connection)
+            {
+                // open the connection 
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    // run the query 
+                    cmd.CommandText = $@"SELECT Id,
+                                                PurchaseDate,
+                                                DecomissionDate,
+                                                Make,
+                                                Manufacturer
+                                        FROM Computer
+                                        WHERE Id = @id;";
+
+                    // parameters
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                    Computer computer = null;
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    if (reader.Read())
+                    {
+                        if (!reader.IsDBNull(reader.GetOrdinal("DecomissionDate")))
+                        {
+                            computer = new Computer
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
+                                DecomissionDate = reader.GetDateTime(reader.GetOrdinal("DecomissionDate")),
+                                Make = reader.GetString(reader.GetOrdinal("Make")),
+                                Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
+                            };
+                        }
+                        else
+                        {
+                            //DateTime? nullDate = null;
+                            
+                            computer = new Computer
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
+                                DecomissionDate = null ,
+                                Make = reader.GetString(reader.GetOrdinal("Make")),
+                                Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
+                            };
+                        }
+                    }
+                    // close the connection and return the computer
+                    reader.Close();
+                    return View(computer);
+                }
+            }
+
         }
 
         // GET: Computers/Create
@@ -141,76 +195,46 @@ namespace BangazonWorkforce.Controllers
                 return View();
             }
         }
+
+        // this is the function to be able to get one computer by id
         private Computer GetComputerById(int id)
         {
-            using (SqlConnection conn = Connection)
+            using(SqlConnection conn = Connection)
             {
+                // open the connection 
                 conn.Open();
-                using (SqlCommand cmd = conn.CreateCommand())
+                using(SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"
-                        SELECT c.Id,
-                        c.Make,
-                        c.Manufacturer,
-                        c.PurchaseDate,
-                        c.DecomissionDate
-                        FROM Computer c 
-                        WHERE c.Id = @Id
-";
+                    // run the query 
+                    cmd.CommandText = $@"SELECT Id,
+                                                PurchaseDate,
+                                                DecomissionDate,
+                                                Make,
+                                                Manufacturer
+                                        FROM Computer
+                                        WHERE Id = @id;";
 
-                    cmd.Parameters.Add(new SqlParameter("@Id", id));
-                    SqlDataReader reader = cmd.ExecuteReader();
+                    // parameters
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
 
                     Computer computer = null;
+                    SqlDataReader reader = cmd.ExecuteReader();
                     if (reader.Read())
                     {
                         computer = new Computer
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Make = reader.GetString(reader.GetOrdinal("Make")),
-                            Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer")),
                             PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
-                            DecomissionDate = reader.GetDateTime(reader.GetOrdinal("DecomissionDate"))
+                            DecomissionDate = reader.GetDateTime(reader.GetOrdinal("DecomissionDate")),
+                            Make = reader.GetString(reader.GetOrdinal("Make")),
+                            Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
                         };
                     }
+                    // close the connection and return the computer
                     reader.Close();
                     return computer;
                 }
             }
-        }
-        private List<Computer> GetAllComputers()
-        {
-            using (SqlConnection conn = Connection)
-            {
-                conn.Open();
-                using (SqlCommand cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = @"
-                        SELECT Id,
-                        Make,
-                        Manufacturer
-                        FROM Computer
-";
-                    SqlDataReader reader = cmd.ExecuteReader();
-                    List<Computer> computers = new List<Computer>();
-                    while (reader.Read())
-                    {
-
-                        Computer computer = new Computer
-                        {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Make = reader.GetString(reader.GetOrdinal("Make")),
-                            Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
-                        };
-                        computers.Add(computer);
-
-                    }
-                    reader.Close();
-                    return computers;
-                }
-
-            }
-
         }
     }
 }
