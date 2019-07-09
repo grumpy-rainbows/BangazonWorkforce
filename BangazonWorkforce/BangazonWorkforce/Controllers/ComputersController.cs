@@ -118,6 +118,7 @@ namespace BangazonWorkforce.Controllers
         // GET: Computers/Delete/5
         public ActionResult Delete(int id)
         {
+
             return View();
         }
 
@@ -137,5 +138,61 @@ namespace BangazonWorkforce.Controllers
                 return View();
             }
         }
-    }
+        private Computer GetComputerById(int id)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"
+                        SELECT c.Id,
+                        c.Make,
+                        c.Manufacturer,
+                        c.PurchaseDate,
+                        c.DecomissionDate
+                        FROM Computer c 
+                        WHERE c.Id = @Id
+";
+
+                    cmd.Parameters.Add(new SqlParameter("@Id", id));
+                    SqlDataReader reader = cmd.ExecuteReader();
+                        
+                }
+            }
+        }
+        private List<Computer> GetAllComputers ()
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"
+                        SELECT Id,
+                        Make,
+                        Manufacturer
+                        FROM Computer
+";
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    List<Computer> computers = new List<Computer>();
+                    while (reader.Read())
+                    {
+
+                        Computer computer = new Computer
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Make = reader.GetString(reader.GetOrdinal("Make")),
+                            Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
+                        };
+                        computers.Add(computer);
+
+                    }
+                    reader.Close();
+                    return computers;
+                }
+
+            }
+
+        }
 }
