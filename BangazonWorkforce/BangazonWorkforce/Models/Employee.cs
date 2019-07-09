@@ -1,4 +1,12 @@
-﻿using System;
+﻿/*
+    Author: Jameka Echols
+    Purpose: This is the data model which mirrors the columns in the EmployeeTable in the db.
+    Methods: None
+ 
+*/
+
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
