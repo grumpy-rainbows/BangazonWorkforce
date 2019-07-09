@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 namespace BangazonWorkforce.Controllers
 {
     public class ComputersController : Controller
+            
     {
         private readonly IConfiguration _config;
 
@@ -29,7 +30,37 @@ namespace BangazonWorkforce.Controllers
         // GET: Computers
         public ActionResult Index()
         {
-            return View();
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"
+                        SELECT Id,
+                        Make,
+                        Manufacturer
+                        FROM Computer
+";
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    List<Computer> computers = new List<Computer>();
+                    while (reader.Read())
+                    {
+
+                        Computer computer = new Computer
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Make = reader.GetString(reader.GetOrdinal("Make")),
+                            Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
+                        };
+                        computers.Add(computer);
+
+                    }
+                    reader.Close();
+                    return View(computers);
+                }
+                
+            }
+ 
         }
 
         // GET: Computers/Details/5
