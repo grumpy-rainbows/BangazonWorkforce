@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using BangazonWorkforce.Models;
+using BangazonWorkforce.Models.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -41,7 +42,7 @@ namespace BangazonWorkforce.Controllers
                                         tr.Name,
                                         tr.StartDate,
                                         tr.EndDate,
-                                        tr.MaxAttendees
+                                        tr.MaxAtendees
                                         FROM TrainingProgram tr";
 
                     SqlDataReader reader = cmd.ExecuteReader();
@@ -55,7 +56,7 @@ namespace BangazonWorkforce.Controllers
                             Name = reader.GetString(reader.GetOrdinal("Name")),
                             StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
                             EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
-                            MaxAtAtendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
+                            MaxAtendees = reader.GetInt32(reader.GetOrdinal("MaxAtendees"))
                         };
 
                         trainingPrograms.Add(trainingProgram);
@@ -67,11 +68,11 @@ namespace BangazonWorkforce.Controllers
                 }
             }
         }
-    
-    
 
-    // GET: TrainingProgram/Details/5
-    public ActionResult Details(int id)
+
+
+        // GET: TrainingProgram/Details/5
+        public ActionResult Details(int id)
         {
             using (SqlConnection conn = Connection)
             {
@@ -98,13 +99,13 @@ namespace BangazonWorkforce.Controllers
                             Name = reader.GetString(reader.GetOrdinal("Name")),
                             StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
                             EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
-                            MaxAtAtendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
+                            MaxAtendees = reader.GetInt32(reader.GetOrdinal("MaxAtendees"))
                         };
 
-                      
-                    reader.Close();
 
-                    return View(trainingProgram);
+                        reader.Close();
+
+                        return View(trainingProgram);
                     }
                     else
                     {
@@ -119,7 +120,7 @@ namespace BangazonWorkforce.Controllers
         // GET: TrainingProgram/Create
         public ActionResult Create()
         {
-            //TrainingProgramCreateViewModel viewModel = new TrainingProgramCreateViewModel();
+            TrainingProgramCreateViewModel viewModel = new TrainingProgramCreateViewModel();
 
             return View();
         }
@@ -127,19 +128,34 @@ namespace BangazonWorkforce.Controllers
         // POST: TrainingProgram/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public async Task<ActionResult> Create(TrainingProgramCreateViewModel model)
         {
-            try
-            {
-                // TODO: Add insert logic here
+         
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"INSERT INTO TrainingProgram
+                ( Id, Name, StartDate, EndDate, MaxAtendees )
+                VALUES
+                ( @Id, @Name, @StartDate, @EndDate, @MaxAtendees )";
+                        cmd.Parameters.Add(new SqlParameter("@Id", model.trainingProgram.Id));
+                        cmd.Parameters.Add(new SqlParameter("@Name", model.trainingProgram.Name));
+                        cmd.Parameters.Add(new SqlParameter("@StartDate", model.trainingProgram.StartDate));
+                        cmd.Parameters.Add(new SqlParameter("@EndDate", model.trainingProgram.EndDate));
+                        cmd.Parameters.Add(new SqlParameter("@MaxAttendees", model.trainingProgram.MaxAtendees));
+                        await cmd.ExecuteNonQueryAsync();
 
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
+                        return RedirectToAction(nameof(Index));
+
+
+
+                    }
+                }
+           
         }
+    
 
         // GET: TrainingProgram/Edit/5
         public ActionResult Edit(int id)
