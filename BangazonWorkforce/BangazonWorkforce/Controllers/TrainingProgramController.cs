@@ -212,19 +212,34 @@ namespace BangazonWorkforce.Controllers
         // GET: TrainingProgram/Delete/5
         public ActionResult Delete(int id)
         {
-            return View();
+            TrainingProgram trainingProgram = GetTrainingProgram(id);
+            return View(trainingProgram);
         }
 
         // POST: TrainingProgram/Delete/5
-        [HttpPost]
+        [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public ActionResult DeleteConfirmed(int id)
         {
             try
             {
                 // TODO: Add delete logic here
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
 
-                return RedirectToAction(nameof(Index));
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"Delete  from TrainingProgram Where Id = @id";
+
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                        cmd.ExecuteNonQuery();
+
+                        return RedirectToAction(nameof(Index));
+                    }
+                }
+
             }
             catch
             {
@@ -245,7 +260,8 @@ namespace BangazonWorkforce.Controllers
                                         tr.StartDate,
                                         tr.EndDate,
                                         tr.MaxAttendees
-                                        FROM TrainingProgram tr";
+                                        FROM TrainingProgram tr
+                                        where tr.Id = @Id";
 
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = cmd.ExecuteReader();
