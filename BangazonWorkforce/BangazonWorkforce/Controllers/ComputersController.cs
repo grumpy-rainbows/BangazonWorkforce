@@ -4,7 +4,6 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using BangazonWorkforce.Models;
-using BangazonWorkforce.Models.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -127,35 +126,19 @@ namespace BangazonWorkforce.Controllers
         // GET: Computers/Create
         public ActionResult Create()
         {
-            // create a new instance of the computer
-            ComputerCreateViewModel viewModel = new ComputerCreateViewModel();
-            return View(viewModel);
+            return View();
         }
 
         // POST: Computers/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(ComputerCreateViewModel viewModel)
+        public ActionResult Create(IFormCollection collection)
         {
             try
             {
                 // TODO: Add insert logic here
-                using(SqlConnection conn = Connection)
-                {
-                    conn.Open();
-                    using(SqlCommand cmd = conn.CreateCommand())
-                    {
-                        cmd.CommandText = $@"INSERT INTO Computer(PurchaseDate, Make, Manufacturer)
-                                            VALUES(@purchaseDate, @make, @manufacturer);";
-                        // parameters
-                        cmd.Parameters.Add(new SqlParameter("@purchaseDate", viewModel.Computer.PurchaseDate));
-                        cmd.Parameters.Add(new SqlParameter("@make", viewModel.Computer.Make));
-                        cmd.Parameters.Add(new SqlParameter("@manufacturer", viewModel.Computer.Manufacturer));
 
-                        cmd.ExecuteNonQuery();
-                        return RedirectToAction(nameof(Index));
-                    }
-                }   
+                return RedirectToAction(nameof(Index));
             }
             catch
             {
@@ -189,30 +172,93 @@ namespace BangazonWorkforce.Controllers
         // GET: Computers/Delete/5
         public ActionResult Delete(int id)
         {
-            Computer computer = GetComputerById(id);
-            return View();
+            using (SqlConnection conn = Connection) { 
+            // open the connection 
+            conn.Open();
+            using (SqlCommand cmd = conn.CreateCommand())
+            {
+                // run the query 
+                cmd.CommandText = $@"SELECT Id,
+                                                PurchaseDate,
+                                                DecomissionDate,
+                                                Make,
+                                                Manufacturer
+                                        FROM Computer
+                                        WHERE Id = @id;";
+
+                // parameters
+                cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                Computer computer = null;
+                SqlDataReader reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    if (!reader.IsDBNull(reader.GetOrdinal("DecomissionDate")))
+                    {
+                        computer = new Computer
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
+                            DecomissionDate = reader.GetDateTime(reader.GetOrdinal("DecomissionDate")),
+                            Make = reader.GetString(reader.GetOrdinal("Make")),
+                            Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
+                        };
+                    }
+                    else
+                    {
+                        //DateTime? nullDate = null;
+
+                        computer = new Computer
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
+                            DecomissionDate = null,
+                            Make = reader.GetString(reader.GetOrdinal("Make")),
+                            Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
+                        };
+                    }
+                }
+                // close the connection and return the computer
+                reader.Close();
+                return View(computer);
+            }
         }
 
-        // POST: Computers/Delete/5
-        [HttpPost]
+    }
+
+    // POST: Computers/Delete/5
+    [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public ActionResult DeleteConfirmed(int id)
         {
             try
             {
                 using (SqlConnection conn = Connection)
                 {
                     conn.Open();
-                    using(SqlCommand cmd = conn.CreateCommand())
+                    using (SqlCommand cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"
-                                            DELETE FROM Computer WHERE Id = @Id, ";
-                        cmd.Parameters.Add(new SqlParameter("@Id", id));
-                        cmd.ExecuteNonQuery();
+                                            SELECT Id, ComputerId, AssignDate, UnassignDate, EmployeeId
+                                            FROM ComputerEmployee 
+                                            WHERE ComputerId = @Id
+                                                ";
+
+                        SqlDataReader reader = cmd.ExecuteReader();
+                        //{
+                        //    if (reader.IsDBNull(reader.GetOrdinal("UnassignDate")))
+                        //    {
+                        //        cmd.CommandText = @"
+                        //                           DELETE FROM Computer WHERE Id = @Id
+                        //                            ";
+                        //        cmd.Parameters.Add(new SqlParameter("@Id", id));
+                        //        cmd.ExecuteNonQuery();
+
+                        //    }
+                        //}
+                        return RedirectToAction(nameof(Index));
                     }
                 }
-
-                return RedirectToAction(nameof(Index));
             }
             catch
             {
