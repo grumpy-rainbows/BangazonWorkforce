@@ -239,11 +239,11 @@ namespace BangazonWorkforce.Controllers
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"
-                                            SELECT Id, ComputerId, AssignDate, UnassignDate, EmployeeId
-                                            FROM ComputerEmployee 
-                                            WHERE ComputerId = @Id
+                                            DELETE FROM ComputerEmployee WHERE ComputerId=@Id,
+                                            DELETE FROM Computer Where Id = @Id
                                                 ";
 
+                        cmd.Parameters.Add(new SqlParameter("@Id", id));
                         SqlDataReader reader = cmd.ExecuteReader();
                         //{
                         //    if (reader.IsDBNull(reader.GetOrdinal("UnassignDate")))
