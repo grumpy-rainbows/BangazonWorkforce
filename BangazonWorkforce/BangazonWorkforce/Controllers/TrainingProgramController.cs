@@ -260,7 +260,8 @@ namespace BangazonWorkforce.Controllers
                                         tr.StartDate,
                                         tr.EndDate,
                                         tr.MaxAttendees
-                                        FROM TrainingProgram tr";
+                                        FROM TrainingProgram tr
+                                        where tr.Id = @Id";
 
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = cmd.ExecuteReader();
