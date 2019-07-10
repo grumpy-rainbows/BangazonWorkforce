@@ -38,7 +38,7 @@ namespace BangazonWorkforce.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"SELECT d.Id, d.Name AS DepartmentName, d.Budget AS DepartmentBudget, e.DepartmentId AS DepartmentID,
-                                        COUNT(*) AS NumberofEmployees
+                                        COUNT(e.Id) AS NumberofEmployees
                                         FROM Department d
                                         LEFT JOIN Employee e ON d.Id = e.DepartmentId
                                         GROUP BY e.DepartmentId, d.Id, d.Name, d.Budget";
