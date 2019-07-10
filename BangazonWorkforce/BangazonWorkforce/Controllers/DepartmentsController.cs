@@ -1,18 +1,86 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
+using BangazonWorkforce.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 
 namespace BangazonWorkforce.Controllers
 {
     public class DepartmentsController : Controller
     {
+
+        private readonly IConfiguration _config;
+
+        public DepartmentsController(IConfiguration config)
+        {
+            _config = config;
+        }
+
+        public SqlConnection Connection
+        {
+            get
+            {
+                return new SqlConnection(_config.GetConnectionString("DefaultConnection"));
+            }
+        }
+
         // GET: Departments
         public ActionResult Index()
         {
-            return View();
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT d.Id, d.Name AS DepartmentName, d.Budget AS DepartmentBudget, e.DepartmentId AS DepartmentID,
+                                        COUNT(e.Id) AS NumberofEmployees
+                                        FROM Department d
+                                        LEFT JOIN Employee e ON d.Id = e.DepartmentId
+                                        GROUP BY e.DepartmentId, d.Id, d.Name, d.Budget";
+
+                    Department department = null;
+
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    List<Department> departments = new List<Department>();
+                    while (reader.Read())
+                    {
+                        if (!reader.IsDBNull(reader.GetOrdinal("NumberofEmployees")))
+                            {
+                                department = new Department
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                    Name = reader.GetString(reader.GetOrdinal("DepartmentName")),
+                                    Budget = reader.GetInt32(reader.GetOrdinal("DepartmentBudget")),
+                                    NumberofEmployees = reader.GetInt32(reader.GetOrdinal("NumberofEmployees"))
+                                };
+                            }
+                        else
+                            {
+                                department = new Department
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                    Name = reader.GetString(reader.GetOrdinal("DepartmentName")),
+                                    Budget = reader.GetInt32(reader.GetOrdinal("DepartmentBudget")),
+                                    NumberofEmployees = null
+                                };
+                            }
+                        
+                        departments.Add(department);
+                    }
+
+                    reader.Close();
+
+                    return View(departments);
+
+                }
+                
+            }
         }
 
         // GET: Departments/Details/5

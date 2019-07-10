@@ -11,9 +11,11 @@ namespace BangazonWorkforce.Models
         public int Id { get; set; }
 
         [Required]
+        [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:dd-MM-yy}")] 
         public DateTime PurchaseDate { get; set; }
 
         [Required]
+        [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:dd-MM-yy}")]
         public DateTime? DecomissionDate { get; set; }
 
         [Required]
