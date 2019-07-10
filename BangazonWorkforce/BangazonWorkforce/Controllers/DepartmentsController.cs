@@ -126,7 +126,8 @@ namespace BangazonWorkforce.Controllers
         // GET: Departments/Create
         public ActionResult Create()
         {
-            return View();
+            DepartmentCreateViewModel viewModel = new DepartmentCreateViewModel();
+            return View(viewModel);
         }
 
         // POST: Departments/Create
