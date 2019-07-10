@@ -89,7 +89,7 @@ namespace BangazonWorkforce.Controllers
             EmployeeCreateViewModel viewModel =
                      new EmployeeCreateViewModel(_config.GetConnectionString("DefaultConnection"));
 
-            viewModel.AvailableDepartments = departments;
+            viewModel.Departments = departments;
 
             return View(viewModel);
         }
