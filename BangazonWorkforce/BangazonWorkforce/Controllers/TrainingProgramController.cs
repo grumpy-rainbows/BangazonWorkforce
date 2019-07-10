@@ -191,11 +191,11 @@ namespace BangazonWorkforce.Controllers
                                         MaxAttendees = @MaxAttendees 
                                         WHERE Id =@Id";
 
+                        cmd.Parameters.Add(new SqlParameter("@Id", id));
                         cmd.Parameters.Add(new SqlParameter("@Name", trainingProgram.Name));
                         cmd.Parameters.Add(new SqlParameter("@StartDate", trainingProgram.StartDate));
                         cmd.Parameters.Add(new SqlParameter("@EndDate", trainingProgram.EndDate));
                         cmd.Parameters.Add(new SqlParameter("@MaxAttendees", trainingProgram.MaxAttendees));
-                        cmd.Parameters.Add(new SqlParameter("@Id", id));
 
 
 
