@@ -11,21 +11,17 @@ namespace BangazonWorkforce.Models.ViewModels
     {
         public Employee employee { get; set; }
 
-        /*public List<Department> Departments { get; set; }*/
+        public List<Department> Departments { get; set; }
 
-        public List<Department> AvailableDepartments { get; set; }
-
-        public List<SelectListItem> AvailableDepartmentsSelectList
+        public List<SelectListItem> DepartmentOptions
         {
             get
             {
-                if (AvailableDepartments == null)
+                return Departments.Select(d => new SelectListItem
                 {
-                    return null;
-                }
-                return AvailableDepartments
-                       .Select(d => new SelectListItem( d.Name, d.Id.ToString()))
-                       .ToList();
+                    Value = d.Id.ToString(),
+                    Text = d.Name
+                }).ToList();
             }
         }
 
@@ -39,11 +35,11 @@ namespace BangazonWorkforce.Models.ViewModels
                     cmd.CommandText = "SELECT Id, Name, Budget FROM Department";
                     SqlDataReader reader = cmd.ExecuteReader();
 
-                    AvailableDepartments = new List<Department>();
+                    Departments = new List<Department>();
 
                     while (reader.Read())
                     {
-                        AvailableDepartments.Add(new Department
+                        Departments.Add(new Department
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Name = reader.GetString(reader.GetOrdinal("Name")),
