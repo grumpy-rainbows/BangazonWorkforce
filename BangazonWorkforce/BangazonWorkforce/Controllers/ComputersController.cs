@@ -188,8 +188,8 @@ namespace BangazonWorkforce.Controllers
                     conn.Open();
                     using(SqlCommand cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = @"DELETE FROM ComputerEmployee WHERE ComputerId = @Id,
-                                            DELETE FROM Computer WHERE Id = @Id ";
+                        cmd.CommandText = @"
+                                            DELETE FROM Computer WHERE Id = @Id, ";
                         cmd.Parameters.Add(new SqlParameter("@Id", id));
                         cmd.ExecuteNonQuery();
                     }
