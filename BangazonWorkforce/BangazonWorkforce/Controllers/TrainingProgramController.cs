@@ -80,41 +80,64 @@ namespace BangazonWorkforce.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"
-                                    SELECT tr.Id,
+                                    SELECT tr.Id As TrainingProgramId,
                                         tr.Name,
                                         tr.StartDate,
                                         tr.EndDate,
-                                        tr.MaxAttendees
-                                        FROM TrainingProgram tr";
+                                        tr.MaxAttendees,
+                                        e.Id As EmployeeId,
+                                        e.FirstName,
+                                        e.LastName,
+                                        e.DepartmentId,
+                                        e.Issupervisor
+                                        FROM TrainingProgram tr
+                                        LEFT JOIN EmployeeTraining et ON et.TrainingProgramId = tr.Id
+                                        LEFT JOIN Employee e ON e.Id = et.EmployeeId
+                                        WHERE tr.Id = @Id";
 
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = cmd.ExecuteReader();
 
                     TrainingProgram trainingProgram = null;
-                    if (reader.Read())
+                    while (reader.Read())
                     {
-                        trainingProgram = new TrainingProgram
+                        if (trainingProgram == null)
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
-                            StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
-                            EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
-                            MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
-                        };
-
-
-                        reader.Close();
-
-                        return View(trainingProgram);
+                            trainingProgram = new TrainingProgram
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("TrainingProgramId")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                                EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                                MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
+                            };
+                        }
+                        if (!reader.IsDBNull(reader.GetOrdinal("TrainingProgramId")))
+                        {
+                            int employeeId = reader.GetInt32(reader.GetOrdinal("employeeId"));
+                            if (!trainingProgram.Attendees.Any(e => e.Id == employeeId))
+                            {
+                                Employee employee = new Employee
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("employeeId")),
+                                    FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                    LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                    DepartmentId = reader.GetInt32(reader.GetOrdinal("departmentId")),
+                                    IsSupervisor = reader.GetBoolean(reader.GetOrdinal("isSupervisor"))
+                                };
+                                trainingProgram.Attendees.Add(employee);
+                            }
+                        }
                     }
-                    else
-                    {
-                        return new StatusCodeResult(StatusCodes.Status404NotFound);
-                    }
+                    reader.Close();
 
+                    return View(trainingProgram);
                 }
+
+
             }
         }
+
 
 
         // GET: TrainingProgram/Create
@@ -130,32 +153,32 @@ namespace BangazonWorkforce.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create(TrainingProgramCreateViewModel model)
         {
-         
-                using (SqlConnection conn = Connection)
+
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    conn.Open();
-                    using (SqlCommand cmd = conn.CreateCommand())
-                    {
-                        cmd.CommandText = @"INSERT INTO TrainingProgram
+                    cmd.CommandText = @"INSERT INTO TrainingProgram
                 (  Name, StartDate, EndDate, MaxAttendees )
                 VALUES
                 (  @Name, @StartDate, @EndDate, @MaxAttendees )";
-                        
-                        cmd.Parameters.Add(new SqlParameter("@Name", model.trainingProgram.Name));
-                        cmd.Parameters.Add(new SqlParameter("@StartDate", model.trainingProgram.StartDate));
-                        cmd.Parameters.Add(new SqlParameter("@EndDate", model.trainingProgram.EndDate));
-                        cmd.Parameters.Add(new SqlParameter("@MaxAttendees", model.trainingProgram.MaxAttendees));
-                        await cmd.ExecuteNonQueryAsync();
 
-                        return RedirectToAction(nameof(Index));
+                    cmd.Parameters.Add(new SqlParameter("@Name", model.trainingProgram.Name));
+                    cmd.Parameters.Add(new SqlParameter("@StartDate", model.trainingProgram.StartDate));
+                    cmd.Parameters.Add(new SqlParameter("@EndDate", model.trainingProgram.EndDate));
+                    cmd.Parameters.Add(new SqlParameter("@MaxAttendees", model.trainingProgram.MaxAttendees));
+                    await cmd.ExecuteNonQueryAsync();
+
+                    return RedirectToAction(nameof(Index));
 
 
 
-                    }
                 }
-           
+            }
+
         }
-    
+
 
         // GET: TrainingProgram/Edit/5
         public ActionResult Edit(int id)
@@ -200,6 +223,69 @@ namespace BangazonWorkforce.Controllers
             catch
             {
                 return View();
+            }
+        }
+
+        private TrainingProgram GetTrainingProgramById(int id)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"
+                                    SELECT tr.Id As TrainingProgramId,
+                                        tr.Name,
+                                        tr.StartDate,
+                                        tr.EndDate,
+                                        tr.MaxAttendees,
+                                        e.Id As EmployeeId,
+                                        e.FirstName,
+                                        e.LastName,
+                                        e.DepartmentId,
+                                        e.Issupervisor
+                                        FROM TrainingProgram tr
+                                        LEFT JOIN EmployeeTraining et ON et.TrainingProgramId = tr.Id
+                                        LEFT JOIN Employee e ON e.Id = et.EmployeeId
+                                        WHERE tr.Id = @Id";
+
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    TrainingProgram trainingProgram = null;
+                    while (reader.Read())
+                    {
+                        if (trainingProgram == null)
+                        {
+                            trainingProgram = new TrainingProgram
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("TrainingProgramId")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
+                                EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
+                                MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
+                            };
+                        }
+                        if (!reader.IsDBNull(reader.GetOrdinal("TrainingProgramId")))
+                        {
+                            int employeeId = reader.GetInt32(reader.GetOrdinal("employeeId"));
+                            if (!trainingProgram.Attendees.Any(e => e.Id == employeeId))
+                            {
+                                Employee employee = new Employee
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("employeeId")),
+                                    FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                    LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                    DepartmentId = reader.GetInt32(reader.GetOrdinal("departmentId")),
+                                    IsSupervisor = reader.GetBoolean(reader.GetOrdinal("isSupervisor"))
+                                };
+                                trainingProgram.Attendees.Add(employee);
+                            }
+                        }
+                    }
+                    reader.Close();
+                    return trainingProgram;
+                }
             }
         }
     }
