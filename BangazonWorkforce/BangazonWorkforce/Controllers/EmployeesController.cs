@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using BangazonWorkforce.Models;
+using BangazonWorkforce.Models.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -83,19 +84,41 @@ namespace BangazonWorkforce.Controllers
         // GET: Employees/Create
         public ActionResult Create()
         {
-            return View();
+            List<Department> departments = GetAllDepartments();
+
+            EmployeeCreateViewModel viewModel =
+                     new EmployeeCreateViewModel(_config.GetConnectionString("DefaultConnection"));
+
+            viewModel.AvailableDepartments = departments;
+
+            return View(viewModel);
         }
 
         // POST: Employees/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public ActionResult Create(Employee employee)
         {
             try
             {
                 // TODO: Add insert logic here
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"INSERT INTO Employee (FirstName, LastName, DepartmentId, IsSuperVisor)
+                                             VALUES (@firstname, @lastname, @departmentid, @issupervisor)";
+                        cmd.Parameters.Add(new SqlParameter("@firstname", employee.FirstName));
+                        cmd.Parameters.Add(new SqlParameter("@lastname", employee.LastName));
+                        cmd.Parameters.Add(new SqlParameter("@departmentid", employee.DepartmentId));
+                        cmd.Parameters.Add(new SqlParameter("@issupervisor", employee.IsSupervisor));
 
-                return RedirectToAction(nameof(Index));
+                        cmd.ExecuteNonQuery();
+
+                        return RedirectToAction(nameof(Index));
+                    }
+                }
             }
             catch
             {
@@ -148,5 +171,37 @@ namespace BangazonWorkforce.Controllers
                 return View();
             }
         }
+
+
+        private List<Department> GetAllDepartments()
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @" SELECT Id, Name, Budget FROM Department";
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    List<Department> departments = new List<Department>();
+                    while (reader.Read())
+                    {
+                        Department department = new Department
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            Budget = reader.GetInt32(reader.GetOrdinal("Budget"))
+                        };
+
+                        departments.Add(department);
+                    }
+
+                    reader.Close();
+
+                    return departments;
+                }
+            }
+        }
+
     }
 }
