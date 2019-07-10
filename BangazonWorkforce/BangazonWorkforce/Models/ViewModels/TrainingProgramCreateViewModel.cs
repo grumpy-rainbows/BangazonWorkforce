@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace BangazonWorkforce.Models.ViewModels
 {
-    public class ComputerCreateViewModel
+    public class TrainingProgramCreateViewModel
     {
-        public Computer Computer { get; set; }
+            public TrainingProgram trainingProgram { get; set; } 
     }
+
 }
