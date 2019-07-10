@@ -186,7 +186,7 @@ namespace BangazonWorkforce.Controllers
                         cmd.CommandText = @"
                                     UPDATE TrainingProgram
                                     SET Name = @Name,
-                                        StartDate = @StartDate
+                                        StartDate = @StartDate,
                                         EndDate = @EndDate,
                                         MaxAttendees = @MaxAttendees 
                                         WHERE Id =@Id";
