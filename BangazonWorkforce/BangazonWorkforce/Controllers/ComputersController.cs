@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using BangazonWorkforce.Models;
+using BangazonWorkforce.Models.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -126,19 +127,35 @@ namespace BangazonWorkforce.Controllers
         // GET: Computers/Create
         public ActionResult Create()
         {
-            return View();
+            // create a new instance of the computer
+            ComputerCreateViewModel viewModel = new ComputerCreateViewModel();
+            return View(viewModel);
         }
 
         // POST: Computers/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public ActionResult Create(ComputerCreateViewModel viewModel)
         {
             try
             {
                 // TODO: Add insert logic here
+                using(SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using(SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = $@"INSERT INTO Computer(PurchaseDate, Make, Manufacturer)
+                                            VALUES(@purchaseDate, @make, @manufacturer);";
+                        // parameters
+                        cmd.Parameters.Add(new SqlParameter("@purchaseDate", viewModel.Computer.PurchaseDate));
+                        cmd.Parameters.Add(new SqlParameter("@make", viewModel.Computer.Make));
+                        cmd.Parameters.Add(new SqlParameter("@manufacturer", viewModel.Computer.Manufacturer));
 
-                return RedirectToAction(nameof(Index));
+                        cmd.ExecuteNonQuery();
+                        return RedirectToAction(nameof(Index));
+                    }
+                }   
             }
             catch
             {
