@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using BangazonWorkforce.Models;
+using BangazonWorkforce.Models.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -170,8 +171,22 @@ namespace BangazonWorkforce.Controllers
         }
 
         // GET: Computers/Delete/5
-        public ActionResult Delete(int id)
+        public ActionResult Delete(int id, ComputerDeleteViewModel viewModel)
         {
+            ComputerDeleteViewModel comp = viewModel;
+            List<Computer> AssignedComputers = isAssigned();
+            foreach (Computer c in AssignedComputers)
+            {
+                if (c.Id == id)
+                {
+                    comp.isAssigned = true;
+                    break;
+                }
+                else
+                {
+                    comp.isAssigned = false;
+                }
+            }
             using (SqlConnection conn = Connection) { 
             // open the connection 
             conn.Open();
@@ -218,9 +233,10 @@ namespace BangazonWorkforce.Controllers
                         };
                     }
                 }
+                    comp.Computer = computer;
                 // close the connection and return the computer
                 reader.Close();
-                return View(computer);
+                return View(comp);
             }
         }
 
@@ -229,8 +245,11 @@ namespace BangazonWorkforce.Controllers
     // POST: Computers/Delete/5
     [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult DeleteConfirmed(int id)
+        public ActionResult DeleteConfirmed(int id, ComputerDeleteViewModel viewModel )
         {
+
+     
+            
             try
             {
                 using (SqlConnection conn = Connection)
@@ -295,6 +314,47 @@ namespace BangazonWorkforce.Controllers
                     reader.Close();
                     return computer;
                 }
+            }
+        }
+        //Tthis is a private method to filter out which computers are assigned.
+        private List<Computer> isAssigned()
+        {
+            using(SqlConnection conn = Connection )
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    //sql statement to select the computers which have ever been assigned. These computers only exist in the join table, so we're checking to see if the id from the Computer table matches the computerId in employeeComputer.
+                    cmd.CommandText = $@"SELECT Id,
+                                                Make, 
+                                                Manufacturer,
+                                                PurchaseDate
+                                              
+                                                FROM Computer 
+                                                WHERE Id IN (SELECT ComputerId FROM ComputerEmployee)
+";
+                    
+                   
+                    
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    List<Computer> AssignedComputers = new List<Computer>();
+                    while (reader.Read())
+                    {
+                       Computer computer = new Computer
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
+                            Make = reader.GetString(reader.GetOrdinal("Make")),
+                            Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
+                        };
+                        AssignedComputers.Add(computer);
+                    }
+                    // close the connection and return the assigned computer
+                    reader.Close();
+                    return AssignedComputers;
+
+                }
+
             }
         }
     }
