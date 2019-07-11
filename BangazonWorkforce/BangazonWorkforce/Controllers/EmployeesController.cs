@@ -78,7 +78,102 @@ namespace BangazonWorkforce.Controllers
         // GET: Employees/Details/5
         public ActionResult Details(int id)
         {
-            return View();
+
+            using (SqlConnection conn = Connection)
+
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT 
+                                        e.Id AS EmployeeId,
+                                        e.FirstName ,
+                                        e.LastName ,
+                                        e.IsSupervisor,
+                                        d.Id as DepartmentId,
+                                        d.Name AS DepartmentName,
+                                        d.Budget AS DepartmentBudget,
+                                        c.Id as ComputerId,
+                                        c.Make as ComputerMake,
+                                        c.Manufacturer as ComputerManufacturer,
+                                        c.PurchaseDate as ComputerPurchaseDate,
+                                        c.DecomissionDate as ComputerDecomissionDate,
+                                        ce.AssignDate as ComputerAssignDate ,
+                                        ce.UnassignDate as ComputerUnassignDate ,
+                                        tp.Id as TrainingProgramId,
+                                        tp.Name as TrainingProgramName,
+                                        tp.StartDate as TrainingProgramStartDate,
+                                        tp.EndDate as TrainingProgramEndDate,
+                                        tp.MaxAttendees as TrainingProgramMaxAtendees
+                                        FROM Employee e
+                                        JOIN Department AS d on d.Id = e.DepartmentId
+                                        LEFT JOIN ComputerEmployee AS ce on ce.EmployeeId = e.Id
+                                        LEFT JOIN Computer AS c on c.Id = ce.ComputerId 
+                                        LEFT JOIN EmployeeTraining AS et on et.EmployeeId = e.Id
+                                        LEFT JOIN TrainingProgram AS tp on tp.Id = et.TrainingProgramId
+                                        WHERE e.Id = @id";
+
+                    cmd.Parameters.Add(new SqlParameter("@Id", id));
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    EmployeeDetailViewModel employee = null;
+
+                    while (reader.Read())
+                    {
+
+                        if (employee == null)
+                        {
+                            employee = new EmployeeDetailViewModel
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
+                                FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
+                                Department = new Department
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
+                                    Name = reader.GetString(reader.GetOrdinal("DepartmentName")),
+                                    Budget = reader.GetInt32(reader.GetOrdinal("DepartmentBudget"))
+                                },
+                                Computer = new Computer()
+                            };
+                        }
+                        if (!reader.IsDBNull(reader.GetOrdinal("ComputerId")))
+
+                        {
+                            employee.Computer = new Computer
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("ComputerId")),
+                                PurchaseDate = reader.GetDateTime(reader.GetOrdinal("ComputerPurchaseDate")),
+                                DecomissionDate = reader.IsDBNull(reader.GetOrdinal("ComputerDecomissionDate")) ? (DateTime?)null : (DateTime?)reader.GetDateTime(reader.GetOrdinal("ComputerDecomissionDate")),
+                                Make = reader.GetString(reader.GetOrdinal("ComputerMake")),
+                                Manufacturer = reader.GetString(reader.GetOrdinal("ComputerManufacturer"))
+
+                            };
+                        };
+
+                        if (!reader.IsDBNull(reader.GetOrdinal("TrainingProgramId")))
+                        {
+
+                            if (!employee.TrainingProgramList.Exists(x => x.Id == reader.GetInt32(reader.GetOrdinal("TrainingProgramId"))))
+                            {
+                                employee.TrainingProgramList.Add(
+                            new TrainingProgram
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("TrainingProgramId")),
+                                Name = reader.GetString(reader.GetOrdinal("TrainingProgramName")),
+                                StartDate = reader.GetDateTime(reader.GetOrdinal("TrainingProgramStartDate")),
+                                EndDate = reader.GetDateTime(reader.GetOrdinal("TrainingProgramEndDate")),
+                                MaxAttendees = reader.GetInt32(reader.GetOrdinal("TrainingProgramMaxAtendees"))
+                            });
+                            }
+                        }
+
+                    }
+                        reader.Close();
+                        return View(employee);
+                }
+            }
         }
 
         // GET: Employees/Create
@@ -112,7 +207,7 @@ namespace BangazonWorkforce.Controllers
                         cmd.Parameters.Add(new SqlParameter("@firstname", employee.FirstName));
                         cmd.Parameters.Add(new SqlParameter("@lastname", employee.LastName));
                         cmd.Parameters.Add(new SqlParameter("@departmentid", employee.DepartmentId));
-                        cmd.Parameters.Add(new SqlParameter("@issupervisor", employee.IsSupervisor));
+                        cmd.Parameters.Add(new SqlParameter("@issupervisor", employee.IsSuperVisor));
 
                         cmd.ExecuteNonQuery();
 
@@ -202,6 +297,69 @@ namespace BangazonWorkforce.Controllers
                 }
             }
         }
+
+
+        private Employee GetEmployeeById(int id)
+        {
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT 
+                                               e.Id AS EmployeeId,                                             
+                                               e.FirstName ,
+	                                           e.LastName ,
+                                               e.IsSuperVisor ,
+                                               d.Id as DepartmentId,
+	                                           d.Name AS DepartmentName,
+                                               c.Id as ComputerId,
+											   c.Make as ComputerMake,
+											   c.PurchaseDate as PurchaseDate,
+											   c.DecomissionDate as DecomissionDate,
+											   c.Manufacturer as Manufacturer
+                                        FROM Employee e
+                                        JOIN Department d on d.Id = e.DepartmentId
+										LEFT JOIN ComputerEmployee AS ce on ce.EmployeeId = e.Id
+                                        AND ce.UnAssignDate IS NULL
+										LEFT JOIN Computer AS c on c.Id = ce.ComputerId								
+										WHERE e.Id= @id";
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    Employee employee = null;
+
+                    if (reader.Read())
+                    {
+
+                        employee = new Employee
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("EmployeeId")),
+                            FirstName = reader.GetString(reader.GetOrdinal("EmployeeFirstName")),
+                            LastName = reader.GetString(reader.GetOrdinal("EmployeeLastName")),
+                            IsSuperVisor = reader.GetBoolean(reader.GetOrdinal("IsSupervisor")),
+                            DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId"))
+                        };
+                        if (!reader.IsDBNull(reader.GetOrdinal("ComputerId")) && !reader.IsDBNull(reader.GetOrdinal("ComputerMake")) && !reader.IsDBNull(reader.GetOrdinal("PurchaseDate")) && !reader.IsDBNull(reader.GetOrdinal("Manufacturer")) && !reader.IsDBNull(reader.GetOrdinal("DecomissionDate")))
+                        {
+
+                            employee.Computer = new Computer
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("ComputerId")),
+                                PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
+                                DecomissionDate = reader.GetDateTime(reader.GetOrdinal("DecomissionDate")),
+                                Make = reader.GetString(reader.GetOrdinal("ComputerMake")),
+                                Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
+                            };
+
+                        }
+                    }
+                    reader.Close();
+                    return employee;
+                }
+            }
+        }
+
 
     }
 }
