@@ -8,6 +8,7 @@ namespace BangazonWorkforce.Models.ViewModels
 {
     public class EmployeeDetailViewModel
     {
+        public int Id { get; set; }
         [Required]
         public string FirstName { get; set; }
 
