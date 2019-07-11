@@ -12,7 +12,7 @@ using Microsoft.Extensions.Configuration;
 namespace BangazonWorkforce.Controllers
 {
     public class ComputersController : Controller
-            
+
     {
         private readonly IConfiguration _config;
 
@@ -59,9 +59,9 @@ namespace BangazonWorkforce.Controllers
                     reader.Close();
                     return View(computers);
                 }
-                
+
             }
- 
+
         }
 
         // GET: Computers/Details/5
@@ -127,35 +127,19 @@ namespace BangazonWorkforce.Controllers
         // GET: Computers/Create
         public ActionResult Create()
         {
-            // create a new instance of the computer
-            ComputerCreateViewModel viewModel = new ComputerCreateViewModel();
-            return View(viewModel);
+            return View();
         }
 
         // POST: Computers/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(ComputerCreateViewModel viewModel)
+        public ActionResult Create(IFormCollection collection)
         {
             try
             {
                 // TODO: Add insert logic here
-                using(SqlConnection conn = Connection)
-                {
-                    conn.Open();
-                    using(SqlCommand cmd = conn.CreateCommand())
-                    {
-                        cmd.CommandText = $@"INSERT INTO Computer(PurchaseDate, Make, Manufacturer)
-                                            VALUES(@purchaseDate, @make, @manufacturer);";
-                        // parameters
-                        cmd.Parameters.Add(new SqlParameter("@purchaseDate", viewModel.Computer.PurchaseDate));
-                        cmd.Parameters.Add(new SqlParameter("@make", viewModel.Computer.Make));
-                        cmd.Parameters.Add(new SqlParameter("@manufacturer", viewModel.Computer.Manufacturer));
 
-                        cmd.ExecuteNonQuery();
-                        return RedirectToAction(nameof(Index));
-                    }
-                }   
+                return RedirectToAction(nameof(Index));
             }
             catch
             {
@@ -187,21 +171,104 @@ namespace BangazonWorkforce.Controllers
         }
 
         // GET: Computers/Delete/5
-        public ActionResult Delete(int id)
+        public ActionResult Delete(int id, ComputerDeleteViewModel viewModel)
         {
-            return View();
+            ComputerDeleteViewModel comp = viewModel;
+            List<Computer> AssignedComputers = isAssigned();
+            foreach (Computer c in AssignedComputers)
+            {
+                if (c.Id == id)
+                {
+                    comp.isAssigned = true;
+                    break;
+                }
+                else
+                {
+                    comp.isAssigned = false;
+                }
+            }
+            using (SqlConnection conn = Connection) { 
+            // open the connection 
+            conn.Open();
+            using (SqlCommand cmd = conn.CreateCommand())
+            {
+                // run the query 
+                cmd.CommandText = $@"SELECT Id,
+                                                PurchaseDate,
+                                                DecomissionDate,
+                                                Make,
+                                                Manufacturer
+                                        FROM Computer
+                                        WHERE Id = @id;";
+
+                // parameters
+                cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                Computer computer = null;
+                SqlDataReader reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    if (!reader.IsDBNull(reader.GetOrdinal("DecomissionDate")))
+                    {
+                        computer = new Computer
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
+                            DecomissionDate = reader.GetDateTime(reader.GetOrdinal("DecomissionDate")),
+                            Make = reader.GetString(reader.GetOrdinal("Make")),
+                            Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
+                        };
+                    }
+                    else
+                    {
+                        //DateTime? nullDate = null;
+
+                        computer = new Computer
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
+                            DecomissionDate = null,
+                            Make = reader.GetString(reader.GetOrdinal("Make")),
+                            Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
+                        };
+                    }
+                }
+                    comp.Computer = computer;
+                // close the connection and return the computer
+                reader.Close();
+                return View(comp);
+            }
         }
 
-        // POST: Computers/Delete/5
-        [HttpPost]
+    }
+
+    // POST: Computers/Delete/5
+    [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public ActionResult DeleteConfirmed(int id, ComputerDeleteViewModel viewModel )
         {
+
+     
+            
             try
             {
-                // TODO: Add delete logic here
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"
+                                       DELETE FROM Computer WHERE Id = @Id 
+                                       AND Id NOT IN (SELECT ComputerId FROM ComputerEmployee)
 
-                return RedirectToAction(nameof(Index));
+                                                ";
+
+                        cmd.Parameters.Add(new SqlParameter("@Id", id));
+                        SqlDataReader reader = cmd.ExecuteReader();
+                 
+                        return RedirectToAction(nameof(Index));
+                    }
+                }
             }
             catch
             {
@@ -247,6 +314,47 @@ namespace BangazonWorkforce.Controllers
                     reader.Close();
                     return computer;
                 }
+            }
+        }
+        //Tthis is a private method to filter out which computers are assigned.
+        private List<Computer> isAssigned()
+        {
+            using(SqlConnection conn = Connection )
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    //sql statement to select the computers which have ever been assigned. These computers only exist in the join table, so we're checking to see if the id from the Computer table matches the computerId in employeeComputer.
+                    cmd.CommandText = $@"SELECT Id,
+                                                Make, 
+                                                Manufacturer,
+                                                PurchaseDate
+                                              
+                                                FROM Computer 
+                                                WHERE Id IN (SELECT ComputerId FROM ComputerEmployee)
+";
+                    
+                   
+                    
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    List<Computer> AssignedComputers = new List<Computer>();
+                    while (reader.Read())
+                    {
+                       Computer computer = new Computer
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            PurchaseDate = reader.GetDateTime(reader.GetOrdinal("PurchaseDate")),
+                            Make = reader.GetString(reader.GetOrdinal("Make")),
+                            Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"))
+                        };
+                        AssignedComputers.Add(computer);
+                    }
+                    // close the connection and return the assigned computer
+                    reader.Close();
+                    return AssignedComputers;
+
+                }
+
             }
         }
     }
