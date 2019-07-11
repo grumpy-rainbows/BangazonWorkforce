@@ -98,6 +98,8 @@ namespace BangazonWorkforce.Controllers
                                         c.Manufacturer as ComputerManufacturer,
                                         c.PurchaseDate as ComputerPurchaseDate,
                                         c.DecomissionDate as ComputerDecomissionDate,
+                                        ce.AssignDate as ComputerAssignDate ,
+                                        ce.UnassignDate as ComputerUnassignDate ,
                                         tp.Id as TrainingProgramId,
                                         tp.Name as TrainingProgramName,
                                         tp.StartDate as TrainingProgramStartDate,

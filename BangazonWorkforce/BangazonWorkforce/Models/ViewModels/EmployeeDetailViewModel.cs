@@ -23,5 +23,6 @@ namespace BangazonWorkforce.Models.ViewModels
         public Computer Computer { get; set; }
 
         public List<TrainingProgram> TrainingProgramList { get; set; }
+        public ComputerEmployee ComputerEmployee { get; set; }
     }
 }
